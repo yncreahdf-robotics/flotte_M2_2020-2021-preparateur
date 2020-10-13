@@ -8,7 +8,7 @@ Se positionner ou on veut sur le pc :
   
 Cloner le git :
 
-`git clone https://github.com/yncreahdf-robotics/flotte_M2_2020-2021-superviseur`
+`git clone https://github.com/yncreahdf-robotics/flotte_M2_2020-2021-preparateur`
 
 
 # A lire avant d'uploader quelque chose :
