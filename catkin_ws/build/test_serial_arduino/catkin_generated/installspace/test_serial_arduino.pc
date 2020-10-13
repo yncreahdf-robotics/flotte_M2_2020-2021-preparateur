@@ -1,0 +1,8 @@
+prefix=/home/preparateur/catkin_ws/install
+
+Name: test_serial_arduino
+Description: Description of test_serial_arduino
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -ltest_serial_arduino
+Requires: message_runtime

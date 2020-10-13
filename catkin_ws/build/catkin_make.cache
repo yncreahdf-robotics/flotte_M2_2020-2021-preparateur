@@ -1,0 +1,2 @@
+mqtt_bridge:test_serial_arduino
+-DCATKIN_DEVEL_PREFIX=/home/preparateur/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/home/preparateur/catkin_ws/install -G Unix Makefiles

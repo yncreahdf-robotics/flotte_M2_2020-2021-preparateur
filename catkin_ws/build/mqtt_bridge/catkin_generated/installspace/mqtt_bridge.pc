@@ -1,0 +1,8 @@
+prefix=/home/preparateur/catkin_ws/install
+
+Name: mqtt_bridge
+Description: Description of mqtt_bridge
+Version: 0.1.7
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
