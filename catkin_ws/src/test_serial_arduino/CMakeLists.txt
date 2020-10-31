@@ -221,6 +221,8 @@ include_directories(
 
 #FIND_LIBRARY(paho.mqtt.c paho.mqtt.c /home/preparateur/paho.mqtt.c)
 
+
+
 set(prog1_SRCS
     src/prog1.cpp
     include/prog1/Prog1.h)
@@ -230,6 +232,18 @@ include_directories(include)
 add_executable(prog1 src/prog1.cpp)
 target_link_libraries(prog1 ${catkin_LIBRARIES})
 add_dependencies(prog1 test_serial_arduino_generate_messages_cpp)
+
+add_executable(prog2 src/prog2.cpp)
+target_link_libraries(prog2 ${catkin_LIBRARIES})
+add_dependencies(prog2 test_serial_arduino_generate_messages_cpp)
+
+target_link_libraries(prog2 ${catkin_LIBRARIES} -lwiringPi)
+
+add_executable(Brain src/Brain.cpp)
+target_link_libraries(Brain ${catkin_LIBRARIES})
+add_dependencies(Brain test_serial_arduino_generate_messages_cpp)
+
+target_link_libraries(Brain ${catkin_LIBRARIES} -lwiringPi)
 
 add_executable(test_broker src/test_broker.cpp)
 target_link_libraries(test_broker ${catkin_LIBRARIES})
