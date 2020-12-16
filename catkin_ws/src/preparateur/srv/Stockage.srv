@@ -1,0 +1,5 @@
+
+---
+string stockage
+string[] idStock
+bool success

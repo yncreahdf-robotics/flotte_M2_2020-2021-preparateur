@@ -213,12 +213,22 @@ void verseLiq(int dose)
     digitalWrite(ACT_P1,LOW);
     digitalWrite(ACT_P2,LOW);
     
-    delay(1000);
+    //delay(2500);
+    
+    for(int i = 0; i<10;i++)
+    {
+      delay(500);
+      nh.spinOnce();
+    }
     
     digitalWrite(ACT_P1,HIGH);
     digitalWrite(ACT_P2,HIGH);
     
-    delay(1000);
+    for(int i = 0; i<10;i++)
+    {
+      delay(500);
+      nh.spinOnce();
+    }
   }
   
 }

@@ -15,7 +15,6 @@ find_package(catkin REQUIRED
   serial
   roslaunch
 
-
 )
 
 ## System dependencies are found with CMake's conventions
@@ -25,7 +24,7 @@ find_package(catkin REQUIRED
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+#catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -63,6 +62,10 @@ find_package(catkin REQUIRED
    FILES
    Commande.srv
    Init.srv
+   Stockage.srv
+   StockAjoutCom.srv
+   StockPositionLibre.srv
+   StockPositionCom.srv
  )
 
 ## Generate actions in the 'action' folder
@@ -169,10 +172,11 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+ catkin_install_python(PROGRAMS
+   scripts/Init.py
+   scripts/IPFinder.py
+   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
@@ -222,3 +226,16 @@ target_link_libraries(Brain1 ${catkin_LIBRARIES})
 add_dependencies(Brain1 preparateur_generate_messages_cpp)
 
 target_link_libraries(Brain1 ${catkin_LIBRARIES} -lwiringPi)
+
+add_executable(Brain2 src/Brain2.cpp)
+target_link_libraries(Brain2 ${catkin_LIBRARIES})
+add_dependencies(Brain2 preparateur_generate_messages_cpp)
+
+
+add_executable(Stockage src/Stockage.cpp)
+target_link_libraries(Stockage ${catkin_LIBRARIES})
+add_dependencies(Stockage preparateur_generate_messages_cpp)
+
+add_executable(GestionServeur src/GestionServeur.cpp)
+target_link_libraries(GestionServeur ${catkin_LIBRARIES})
+add_dependencies(GestionServeur preparateur_generate_messages_cpp)

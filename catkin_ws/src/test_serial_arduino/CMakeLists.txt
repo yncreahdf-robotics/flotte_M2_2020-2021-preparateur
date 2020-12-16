@@ -64,7 +64,7 @@ find_package(catkin REQUIRED COMPONENTS
    test.srv
    Connexion.srv
    DemandeContenant.srv
-
+   Commande.srv
  )
 
 

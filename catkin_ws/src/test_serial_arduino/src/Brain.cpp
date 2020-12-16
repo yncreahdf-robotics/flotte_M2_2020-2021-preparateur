@@ -78,6 +78,7 @@ int main(int argc, char **argv)
 			}
 
 			dem=10;
+			ros::spinOnce();
 			break;
 
 		case 1:
@@ -120,15 +121,16 @@ int main(int argc, char **argv)
 			{
 				//Mouvement Niryo1 
 				
-				/*do{
+				do{
 					digitalWrite(NIRYO_1, LOW);
 				}while(digitalRead(NIRYO_1I) == false);
-				digitalWrite(NIRYO_1, HIGH);*/
+				digitalWrite(NIRYO_1, HIGH);
 			}
 
 			//Demande contenu
 
 			dem=10;
+			ros::spinOnce();
 			break;
 	
 	}

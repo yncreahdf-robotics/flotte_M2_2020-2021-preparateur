@@ -2,91 +2,154 @@
 
 #include <std_msgs/String.h>
 #include <std_msgs/UInt16.h>
+#include <std_msgs/Bool.h>
 
-#include "test_serial_arduino/Connexion.h"
-#include "test_serial_arduino/DemandeContenant.h"
+#include <std_srvs/Trigger.h>
+
+#include <preparateur/Commande.h>
+#include <preparateur/Init.h>
+#include <preparateur/Stockage.h>
 
 #include "MQTTClient.h"
 
 #include <iostream>
+#include <iterator>
 
-#include <wiringPi.h>
-
-#define NIRYO_1 	2
-#define NIRYO_1I 	3 //Mouvement niryo1 fini
 using namespace std;
 
 int dem = 10;
 bool act = false;
 
-void supperviseurCallback(const std_msgs::UInt16::ConstPtr& msg)
-{
- 
+bool state = false;
 
-  ROS_INFO("Message from supervisor: [%d]", msg->data);
-  if(msg->data == 0)
+string cocktailComposition = "xxxxxx";
+string test;
+
+//Traitement des demandes superviseur 
+void supperviseurCallback(const std_msgs::String::ConstPtr& msg)
+{
+  ROS_INFO("Message from supervisor: [%s]", msg->data.c_str());
+
+  if(msg->data.c_str()[0] == 'C') //Demande de faire un cocktail
   {
-	dem = 0;
-    act = true;
-  }
-  else if(msg->data == 1)
-  {
+  	ROS_INFO("Demande d'un cocktail");
+	
+	for(int i = 1; i<7; i++)
+	{
+		cocktailComposition[i-1] = msg->data.c_str()[i];
+	}
+	ROS_INFO("%s",cocktailComposition);
+
 	dem = 1;
-    act = true;
+  }
+  else if(msg->data.c_str()[0] == '0') //Demande de charger 
+  {
+	dem=0;
   }
   
+}
+
+bool statePreparateur(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+{
+	res.success = state;
+
+	return true;
 }
 
 int main(int argc, char **argv)
 {
   
-  ros::init(argc, argv, "prog2");
+  ros::init(argc, argv, "Brain1");
   ros::NodeHandle n;
 
- ros::ServiceClient clientCoDistrib1 = n.serviceClient<test_serial_arduino::Connexion>("co_distrib_contenant");
-  test_serial_arduino::Connexion srvCoDistrib1;
-
-  ros::ServiceClient clientDemDistrib1 = n.serviceClient<test_serial_arduino::DemandeContenant>("dem_distrib_contenant");
-  test_serial_arduino::DemandeContenant srvDemDistrib1;
   
-  ros::Publisher dis_pub = n.advertise<std_msgs::UInt16>("distrib_sub", 1000);
+  ros::ServiceClient clientDemDistrib1 = n.serviceClient<preparateur::Commande>("DGobelet/Demande");
+  preparateur::Commande srvDemDistrib1;
+  
+  ros::ServiceClient clientDemTourn1 = n.serviceClient<preparateur::Commande>("Tourniquet/commande");
+  preparateur::Commande srvDemTourn1;
+
+  ros::ServiceClient clientDemStock1 = n.serviceClient<preparateur::Stockage>("/Stockage/Demande");
+  preparateur::Stockage srvDemStock1;
+
+  ros::ServiceClient clientDemStock2 = n.serviceClient<preparateur::Commande>("/Stockage/Position");
+  preparateur::Commande srvDemStockPos;
+
+
+  ros::ServiceServer serverStatepreparateur = n.advertiseService("/Preparateur/State",statePreparateur);
+
 
   std_msgs::UInt16 msg_test;
 
-  ros::Subscriber sub = n.subscribe("infoSup", 1000, supperviseurCallback);
+  ros::Subscriber sub = n.subscribe("Supperviseur/Commande", 1000, supperviseurCallback);
 
-  setenv("WIRINGPI_GPIOMEM", "1", 1);
-  wiringPiSetupGpio();
-  pinMode(NIRYO_1, OUTPUT);
-  pinMode(NIRYO_1I, INPUT);
+  ros::Publisher pub = n.advertise<std_msgs::String>("Preparateur/TalkSup",1000);
+  std_msgs::String msg2;
+  std::stringstream ss2;
+  std_msgs::String msg;
+  std::stringstream ss;
+  ss << "Pr";
+  ss2 << "Ch";
 
   while (ros::ok())
   {
-
+	
 
 	switch(dem)
 	{
 		case 0:
-			ROS_INFO("Test co");
-		  	if (clientCoDistrib1.call(srvCoDistrib1))
+			ROS_INFO("Le serveur est la");
+
+			ROS_INFO("Previent le sup que j ai servi le produit au serveur");
+			
+			ROS_INFO("Niryo3 depose le produit sur le robot");
+			std::system("rosrun preparateur runDeStockDemo.sh");
+
+			ros::Duration(5.0).sleep();
+
+			ROS_INFO("Previent le sup que j ai servi le produit au serveur");
+		
+		
+		
+	
+			//msg2.data = ss2.str();
+	    	//pub.publish(msg2);
+
+			srvDemStockPos.request.com = "1";
+
+
+
+
+			if (clientDemStock2.call(srvDemStockPos)) 
 			{
-			  ROS_INFO("Alors success : %d", srvDemDistrib1.response.success);
+				ROS_INFO("Position 1 stock");
+			  	
+			
+			  
 			}
 			else
 			{
-			  ROS_ERROR("Failed to call service connexion");
+			  ROS_ERROR("Failed to call service stockage");
 			}
+
+			
+		
+			msg2.data = ss2.str();
+            pub.publish(msg2);
 
 			dem=10;
 			ros::spinOnce();
 			break;
 
-		case 1:
-			ROS_INFO("Preparation d'une commande");
-			ROS_INFO("Distribution contenant");
-			
-			bool E1 = false;
 
+
+
+
+
+		case 1:
+			bool E1 = false;
+			state = true;
+			
 		  	if (clientDemDistrib1.call(srvDemDistrib1)) //Demande d'un contenant
 			{
 			  	ROS_INFO("Rep : %I64d", srvDemDistrib1.response.code);
@@ -110,28 +173,93 @@ int main(int argc, char **argv)
 						E1 = false;
 						break;
 				}
-			  
 			}
 			else
 			{
 			  ROS_ERROR("Failed to call service contenant");
 			}
+			
 
+			//E1 = true; //A ENLEVER
+			
 			if(E1)
 			{
 				//Mouvement Niryo1 
+				ROS_INFO("Niryo1 prend le gobelet");
+				std::system("rosrun preparateur runGobN1.sh");
+
+				srvDemTourn1.request.com = cocktailComposition;
 				
-				do{
-					digitalWrite(NIRYO_1, LOW);
-				}while(digitalRead(NIRYO_1I) == false);
-				digitalWrite(NIRYO_1, HIGH);
+				
+				if (clientDemTourn1.call(srvDemTourn1)) //Demande du tourniquet de faire le cocktail
+				{
+				  	ROS_INFO("Cocktail en cours");
+				  
+				}
+				else
+				{
+				  ROS_ERROR("Failed to call service tourniquet");
+				}
+
+				ROS_INFO("Niryo1 depose le gobelet");
+				std::system("rosrun preparateur runDeGobN1.sh");
+
+				ROS_INFO("Niryo2 depose le gobelet dans le stockage");
+				std::system("rosrun preparateur demo_Stock.sh");
+
+
+				srvDemStockPos.request.com = "2";
+
+
+
+
+
+				if (clientDemStock2.call(srvDemStockPos)) //Demande d'un contenant
+				{
+					ROS_INFO("Position 2 stock");
+				  	
+				
+				  
+				}
+				else
+				{
+				  ROS_ERROR("Failed to call service stockage");
+				}
+
+
+
+
+				//On previent le superviseur que le produit est pret
+				ROS_INFO("Previent le sup que le produit est pret");
+			
+		
+				msg.data = ss.str();	
+
+				pub.publish(msg);
+				ROS_INFO("Preparation d'une commande");
+				ROS_INFO("Distribution contenant");
+
+				
+
+				dem=10;
+
 			}
+
+
+			state = false;
+
+			
 
 			//Demande contenu
 
 			dem=10;
 			ros::spinOnce();
+
 			break;
+	
+
+
+
 	
 	}
   	ros::spinOnce();

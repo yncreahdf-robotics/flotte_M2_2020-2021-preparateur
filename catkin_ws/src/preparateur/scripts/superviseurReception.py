@@ -3,6 +3,7 @@
 import paho.mqtt.client as mqtt
 import paho.mqtt.subscribe as subscribe
 
+
 import rospy
 from std_msgs.msg import String
 from std_msgs.msg import UInt64
@@ -36,17 +37,18 @@ def on_message(client, userdata, msg):
 		hello_str =1
 		pub.publish(hello_str)
 		rate.sleep()
+		
 
 if __name__ == '__main__':
 
 	#pub = rospy.Publisher('infoSup', UInt64, queue_size=10)
-	pub = rospy.Publisher('infoSup', UInt16, queue_size=10)
+	pub = rospy.Publisher('Supperviseur/Commande', UInt16, queue_size=10)
 	rospy.init_node('talker', anonymous=True)
 	rate = rospy.Rate(10) # 10hz
 
        	client = mqtt.Client()
        	#client.connect("192.168.43.197",1883,60)
-	client.connect("10.224.0.57",1883,60)
+	client.connect("192.168.1.9",1883,60)
        	client.on_connect = on_connect
        	client.on_message = on_message
        	client.on_disconnect = on_disconnect
