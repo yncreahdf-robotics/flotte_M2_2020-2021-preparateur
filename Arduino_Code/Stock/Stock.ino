@@ -46,6 +46,7 @@ void goToPostion(String pos)
     positionG.data = 1;
     //Serial.println("pelican");
     do{
+     nh.spinOnce();
      Moteur.setSpeed(50);
      Moteur.step(-NbrPas1);
      //Serial.println("Je tourne -->");
@@ -57,6 +58,7 @@ void goToPostion(String pos)
   {
     positionG.data = 2;
     do{
+     nh.spinOnce();
      Moteur.setSpeed(50);
      Moteur.step(NbrPas1);
      //Serial.println("Je tourne <--");

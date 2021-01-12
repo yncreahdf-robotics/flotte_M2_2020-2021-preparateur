@@ -386,7 +386,7 @@ void verseLiq(int dose)
     
     //delay(2500);
     
-    for(int i = 0; i<10;i++)
+    for(int i = 0; i<14;i++)
     {
       delay(500);
       nh.spinOnce();
@@ -395,7 +395,7 @@ void verseLiq(int dose)
     digitalWrite(ACT_P1,HIGH);
     digitalWrite(ACT_P2,HIGH);
     
-    for(int i = 0; i<10;i++)
+    for(int i = 0; i<14;i++)
     {
       delay(500);
       nh.spinOnce();
