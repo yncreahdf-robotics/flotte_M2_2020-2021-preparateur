@@ -232,9 +232,10 @@ int main(int argc, char **argv)
 				//On previent le superviseur que le produit est pret
 				ROS_INFO("Previent le sup que le produit est pret");
 			
-		
+				//ros::Duration(240.0).sleep();
 				msg.data = ss.str();	
 
+				
 				pub.publish(msg);
 				ROS_INFO("Preparation d'une commande");
 				ROS_INFO("Distribution contenant");

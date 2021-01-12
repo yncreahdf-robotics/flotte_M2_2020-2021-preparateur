@@ -25,6 +25,10 @@ from std_msgs.msg import UInt64
 from std_msgs.msg import UInt16
 from std_srvs.srv import Trigger
 
+from preparateur.srv import Init
+
+from preparateur.srv import StockAjoutCom
+
 #	Robot retrieves his own IP
 my_ip=IPFinder.get_my_ip()
 
@@ -93,45 +97,65 @@ def on_message(client, userdata, msg):
 		print("Taille com " + str(len(Commande.get_Commande_with_status_and_commandNbr(flotte_db, commandeID, "Ordered"))))
 		
 
-		for i in Commande.get_Commande_with_status_and_commandNbr(flotte_db, commandeID, "Ordered"): #Tant que la commande n est pas prete
+		#for i in Commande.get_Commande_with_status_and_commandNbr(flotte_db, commandeID, "Ordered"): #Tant que la commande n est pas prete
 			
 			
-			print("idProduit : ")
-			print(i[0])
+		print("idProduit : ")
+		print(Commande.get_Commande_with_status_and_commandNbr(flotte_db, commandeID, "Ordered")[0][0])
 
-			if (state_preprateur_client() == False):
-			
-				print("Le preparateur est disponible pour faire la commande")
-				tabCom = Commande.get_Bouteille(flotte_db, i[0])[0]
-				print(tabCom)
-			
-				envoieCom = "C"
-
-				#for c in range(5):
-				#	envoieCom += str(tabCom[c])
-			
-				envoieCom += str(tabCom[0])
-				envoieCom += str(tabCom[1])
-				envoieCom += str(tabCom[2])
-				envoieCom += str(tabCom[3])
-				envoieCom += str(tabCom[4])
-				envoieCom += str(tabCom[5])
-
-				print(envoieCom)
+		if (state_preprateur_client() == False):
 		
-				pubSupCom.publish(envoieCom)
-				rate.sleep()
-			else:
-				print("Le preparateur n est pas disponnible pour faire la commande")
-		publish(ipsuperviseur,port,"Preparateur/Prepared", my_ip,2)
+			print("Le preparateur est disponible pour faire la commande")
+			tabCom = Commande.get_Bouteille(flotte_db, Commande.get_Commande_with_status_and_commandNbr(flotte_db, commandeID, "Ordered")[0][0])[0]
+			print(tabCom)
+		
+			envoieCom = "C"
+
+			#for c in range(5):
+			#	envoieCom += str(tabCom[c])
+		
+			envoieCom += str(tabCom[0])
+			envoieCom += str(tabCom[1])
+			envoieCom += str(tabCom[2])
+			envoieCom += str(tabCom[3])
+			envoieCom += str(tabCom[4])
+			envoieCom += str(tabCom[5])
+
+			print(envoieCom)
+	
+			#pubSupCom.publish(envoieCom)
+
+			try:
+				print("Demande de commande envoye")
+				faireCom = rospy.ServiceProxy('Supperviseur/DemandeCommande', StockAjoutCom)
+				respFC = faireCom(envoieCom,int(commandeID))
+
+			except rospy.ServiceException as e:
+				print("Ah bah ca marche po")
+
+
+
+			rate.sleep()
+		else:
+			print("Le preparateur n est pas disponnible pour faire la commande")
+		#publish(ipsuperviseur,port,"Preparateur/Prepared", my_ip,2)
 			
 	if (msg.topic=="Preparateur/Charge" ):
 				
 		print("ORDRE RECU")
 		print("demande preparateur depose produit !!!!!!!!!!!!!!!!!!")
-		hello_str ="0"
-		pubSupCom.publish(hello_str)
-		rate.sleep()
+		#hello_str ="0"
+		#pubSupCom.publish(hello_str)
+		#rate.sleep()
+		commandeID=msg.payload.decode("utf-8").split("/")[1]
+		try:
+			print("Demande de charger envoye")
+			chargeCom = rospy.ServiceProxy('Supperviseur/DemandeCharge', StockAjoutCom)
+			respC = chargeCom(commandeID,0)
+
+		except rospy.ServiceException as e:
+			print("Ah bah ca marche po")
+
 
 	if (msg.topic=="Ping/Feedback" and msg.payload.decode("utf-8").split("/")[0]==my_ip):
 		if msg.payload.decode("utf-8").split("/")[1] == "No":
@@ -224,6 +248,8 @@ pubSupServ = rospy.Publisher('Supperviseur/Serveur', String, queue_size=10)
 rospy.init_node('talker', anonymous=True)
 rate = rospy.Rate(10) # 10hz
 rospy.Subscriber("Preparateur/TalkSup", String, callback)
+
+rospy.wait_for_service('Supperviseur/DemandeCharge')
 
 
 while(1):

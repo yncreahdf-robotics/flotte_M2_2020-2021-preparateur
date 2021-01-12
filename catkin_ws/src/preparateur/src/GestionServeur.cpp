@@ -30,6 +30,8 @@ using namespace std;
   ros::ServiceClient clientStockDel;
   preparateur::StockAjoutCom srvDemStockDel;
 
+bool order = false;
+
 void niryoGoToPos(int pos)
 {
 
@@ -57,19 +59,19 @@ void niryoGoToPos(int pos)
 			switch(pos){
 				case 5:
 					ROS_INFO("Mouvement niryo4 vers position 1");
-			
+					std::system("rosrun preparateur runNiryo4_Ext.sh");
 					break;
 				case 6:
 					ROS_INFO("Mouvement niryo4 vers position 2");
-
+					std::system("rosrun preparateur runNiryo4_Int.sh");
 					break;
 				case 7:
 					ROS_INFO("Mouvement niryo5 vers position 2");
-
+					std::system("rosrun preparateur runNiryo3_Int.sh");
 					break;
 				case 8:
 					ROS_INFO("Mouvement niryo5 vers position 1");
-
+					std::system("rosrun preparateur runNiryo3_Ext.sh");
 					break;
 			}
 		}
@@ -95,19 +97,19 @@ void niryoGoToPos(int pos)
 			switch(pos){
 				case 1:
 					ROS_INFO("Mouvement niryo4 vers position 1");
-			
+					std::system("rosrun preparateur runNiryo4_Ext.sh");
 					break;
 				case 2:
 					ROS_INFO("Mouvement niryo4 vers position 2");
-
+					std::system("rosrun preparateur runNiryo4_Int.sh");
 					break;
 				case 3:
 					ROS_INFO("Mouvement niryo5 vers position 2");
-
+					std::system("rosrun preparateur runNiryo3_Int.sh");
 					break;
 				case 4:
 					ROS_INFO("Mouvement niryo5 vers position 1");
-
+					std::system("rosrun preparateur runNiryo3_Ext.sh");
 					break;
 			}
 		}
@@ -132,7 +134,31 @@ void supperviseurCallback(const std_msgs::String::ConstPtr& msg)
 	{
 		ROS_INFO("nb pos : %d",srvStockStockComPos.response.pos.size());
 		ROS_INFO("Position(s) : ");
-		
+
+		ROS_INFO("%f ",srvStockStockComPos.response.pos[0]);
+
+		niryoGoToPos(int(srvStockStockComPos.response.pos[0])+1);
+
+
+		srvDemStockDel.request.pos = srvStockStockComPos.response.pos[0];
+		srvDemStockDel.request.idcom = msg->data;
+
+		if (clientStockDel.call(srvDemStockDel)) //On supprime du stock la commande qui vient d'être servie
+		{
+				
+		}
+		else
+		{
+		  ROS_ERROR("Failed to call service Del Stockage");
+		}
+
+
+
+
+
+
+
+		/*
 		for(int i = 0; i < srvStockStockComPos.response.pos.size(); i++)
 		{
 			ROS_INFO("%f ",srvStockStockComPos.response.pos[i]);
@@ -152,14 +178,14 @@ void supperviseurCallback(const std_msgs::String::ConstPtr& msg)
 			}
 
 		}
-	  	
+	  	*/
 
 
 
 
 	  //On previent le superviseur que la commande est sur le serveur
 
-
+	  order = true;
 
 	}
 	else
@@ -168,6 +194,75 @@ void supperviseurCallback(const std_msgs::String::ConstPtr& msg)
 	}
   
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+bool chargeCom(preparateur::StockAjoutCom::Request &req, preparateur::StockAjoutCom::Response &res)
+{
+	ROS_INFO("Demande de charger une commande");
+	ROS_INFO("id : %s",req.idcom.c_str());
+
+	srvStockStockComPos.request.idcom = req.idcom.c_str();
+
+	if (clientStockComPos.call(srvStockStockComPos)) //Demande d'un contenant
+	{
+		ROS_INFO("nb pos : %d",srvStockStockComPos.response.pos.size());
+		ROS_INFO("Position(s) : ");
+
+		ROS_INFO("%f ",srvStockStockComPos.response.pos[0]);
+
+		niryoGoToPos(int(srvStockStockComPos.response.pos[0])+1);
+
+
+		srvDemStockDel.request.pos = srvStockStockComPos.response.pos[0];
+		srvDemStockDel.request.idcom = req.idcom.c_str();
+
+		if (clientStockDel.call(srvDemStockDel)) //On supprime du stock la commande qui vient d'être servie
+		{
+				
+		}
+		else
+		{
+		  ROS_ERROR("Failed to call service Del Stockage");
+		}
+
+	  //On previent le superviseur que la commande est sur le serveur
+
+	  order = true;
+
+	}
+	else
+	{
+	  ROS_ERROR("Failed to call service stockage");
+	}
+	
+
+
+	return true; 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 int main(int argc, char **argv)
@@ -185,14 +280,36 @@ int main(int argc, char **argv)
 
 
 
+  ros::ServiceServer demandeCharge = n.advertiseService("Supperviseur/DemandeCharge",chargeCom);
+
+
+
+
+
+
+
+
   ros::Subscriber sub = n.subscribe("Supperviseur/Serveur", 1000, supperviseurCallback);
+
+  ros::Publisher pub = n.advertise<std_msgs::String>("Preparateur/TalkSup",1000);
+  
+  std_msgs::String msg2;
+  std::stringstream ss2;
+  ss2 << "Ch";
+
+  msg2.data = ss2.str();
+      
 
   ROS_INFO("Gestion des serveurs pret");
 
 
   while (ros::ok())
   {
-	
+	if(order)
+	{
+		pub.publish(msg2);
+		order = false;
+	}
   	ros::spinOnce();
   }
 }

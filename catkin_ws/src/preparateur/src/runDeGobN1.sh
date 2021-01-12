@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sshpass -p robotics ssh niryo@10.224.1.231 bash -c './runDeGob.sh'
+sshpass -p robotics ssh niryo@10.224.1.6 bash -c './runDeGob.sh'
