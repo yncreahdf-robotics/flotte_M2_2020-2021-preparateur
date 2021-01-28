@@ -65,7 +65,7 @@ void goToPostion(String pos)
     }while(digitalRead(finDeCourse1) != HIGH);
 
   }
-  //digitalWrite(EN, LOW);
+  digitalWrite(EN, LOW);
 }
 
 

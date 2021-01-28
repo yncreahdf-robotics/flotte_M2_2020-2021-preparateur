@@ -52,6 +52,8 @@ int positionAct;
 String cocktail;
 int cocktailInt[6];
 
+boolean initS = false;
+
 
 ros::NodeHandle  nh;
 
@@ -96,40 +98,37 @@ void callbackCom(const Commande::Request & req, Commande::Response & res){
   
   if(!digitalRead(irPresence))
   {
+   
     if(abs(6-positionAct) > abs(0-positionAct))
         {    
-          //Serial.println("On tourne vers le dernier liquide");
-          goToPos(1);
-          
+         
           for(int i=1;i<7;i++)
           {
             nh.spinOnce();
-            //Serial.print("On va a la position : ");
-            //Serial.println(i);
-            //Serial.print("Nombre de dose pour la commande : ");
-            //Serial.println(cocktailInt[i-1]);
-            goToPos(i);
-            delay(500);
-            verseLiq(cocktailInt[i-1]);
+            
+            if(cocktailInt[i-1] != 0)
+            {
+              goToPos(i);
+              delay(500);
+              verseLiq(cocktailInt[i-1]);
+            }
           }
         }
         else
         {
-          //Serial.println("On tourne vers le premier liquide");
-          goToPos(6);
-          
           for(int i=6;i>0;i--)
           {
             nh.spinOnce();
-            //Serial.print("On va a la position : ");
-            //Serial.println(i);
-            //Serial.print("Nombre de dose pour la commande : ");
-            //Serial.println(cocktailInt[i-1]);
-            goToPos(i);
-            delay(500);
-            verseLiq(cocktailInt[i-1]);
+            
+            if(cocktailInt[i-1] != 0)
+            {
+              goToPos(i);
+              delay(500);
+              verseLiq(cocktailInt[i-1]);
+            }
           }
         }
+        initS = true;
         res.code =  systemOK;
         res.success = true;
   }
@@ -283,76 +282,83 @@ boolean goToPos(int pos)
   String test = "Go to pos " +  String(pos);
   nh.loginfo(test.c_str());
   
-  if(pos == 1 || pos == 6)
+  if(pos != positionAct)
   {
-    switch(pos){
-      case 1:
-        digitalWrite(driverEn,HIGH);
-        nh.loginfo("Go to pos 1");
-        while(digitalRead(finDeCourse2) == LOW)
-        {
-          //rotateForS(0, true);
-          digitalWrite(driverDir, HIGH);
-          digitalWrite(driverPul, HIGH);
-          delayMicroseconds(6000);
-          digitalWrite(driverPul, LOW);
-          delayMicroseconds(6000);
-          nh.spinOnce();
-        }
-        break;
-      case 6:
-        digitalWrite(driverEn,HIGH);
-        nh.loginfo("Go to pos 6");
-        while(digitalRead(finDeCourse1) == LOW)
-        {
-          //rotateForS(0, false);
-          digitalWrite(driverDir, LOW);
-          digitalWrite(driverPul, HIGH);
-          delayMicroseconds(6000);
-          digitalWrite(driverPul, LOW);
-          delayMicroseconds(6000);
-          nh.spinOnce();
-        }
-        
-        digitalWrite(driverEn,HIGH);
-        break;
-    }
-    positionAct = pos;
-  }
-  else
-  {
-    if(positionAct > pos)
+    if(pos == 1 || pos == 6)
     {
-      //nh.loginfo("Rotation de type 1");
-      for(int i = 0;i<(positionAct-pos);i++)
-      {
-        //rotateForS(2000, false, 4000);
-        
-        nh.spinOnce();
-        rotateForS(2250, false, 4000);
-        rotateForS(1080, false, 1000);
-         
+      switch(pos){
+        case 1:
+          digitalWrite(driverEn,HIGH);
+          nh.loginfo("Go to pos 1");
+          while(digitalRead(finDeCourse2) == LOW)
+          {
+            //rotateForS(0, true);
+            digitalWrite(driverDir, HIGH);
+            digitalWrite(driverPul, HIGH);
+            delayMicroseconds(6000);
+            digitalWrite(driverPul, LOW);
+            delayMicroseconds(6000);
+            nh.spinOnce();
+          }
+          break;
+        case 6:
+          digitalWrite(driverEn,HIGH);
+          nh.loginfo("Go to pos 6");
+          while(digitalRead(finDeCourse1) == LOW)
+          {
+            //rotateForS(0, false);
+            digitalWrite(driverDir, LOW);
+            digitalWrite(driverPul, HIGH);
+            delayMicroseconds(6000);
+            digitalWrite(driverPul, LOW);
+            delayMicroseconds(6000);
+            nh.spinOnce();
+          }
+          
+          digitalWrite(driverEn,HIGH);
+          break;
       }
-      positionAct = pos;
-    }
-    else if (positionAct < pos)
-    {
-      //nh.loginfo("Rotation de type 2");
-      for(int i = 0;i<(pos-positionAct);i++)
-      {
-        //rotateForS(2000, true, 4000);
-        
-        nh.spinOnce();
-        rotateForS(2250, true, 4000);
-        rotateForS(1080, true, 1000);
-      }
-      
       positionAct = pos;
     }
     else
     {
-      positionAct = pos;
+      if(positionAct > pos)
+      {
+        //nh.loginfo("Rotation de type 1");
+        for(int i = 0;i<(positionAct-pos);i++)
+        {
+          //rotateForS(2000, false, 4000);
+          
+          nh.spinOnce();
+          rotateForS(2250, false, 4000);
+          rotateForS(1080, false, 1000);
+           
+        }
+        positionAct = pos;
+      }
+      else if (positionAct < pos)
+      {
+        //nh.loginfo("Rotation de type 2");
+        for(int i = 0;i<(pos-positionAct);i++)
+        {
+          //rotateForS(2000, true, 4000);
+          
+          nh.spinOnce();
+          rotateForS(2250, true, 4000);
+          rotateForS(1080, true, 1000);
+        }
+        
+        positionAct = pos;
+      }
+      else
+      {
+        positionAct = pos;
+      }
     }
+  }
+  else
+  {
+    nh.loginfo("On est deja a la bonne position");
   }
 }
 
@@ -453,5 +459,25 @@ void setup()
 void loop()
 {
   nh.spinOnce();
+  
+  if(initS == true)
+  {
+    if(positionAct<4)
+    {
+      for(int i= positionAct;i>0;i--)
+      {
+        goToPos(i);
+      }
+      
+    }
+    else
+    {
+      for(int i = positionAct;i<7;i++)
+      {
+        goToPos(i);
+      }
+    }
+    initS = false;
+  }
 }
 
